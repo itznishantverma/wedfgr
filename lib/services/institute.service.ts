@@ -7,6 +7,8 @@ export async function resolveInstitute(
   const masterClient = getMasterClient();
 
   if (!masterClient) {
+    if (process.env.NODE_ENV === "production") return null;
+
     const fallbackUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const fallbackKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

@@ -1,12 +1,13 @@
 import {
   GraduationCap, Users, FileText, CalendarCheck, CreditCard,
   Clock, BarChart3, MessageSquare, BookOpen, Bus, Building,
-  Settings, Shield, FileCheck, Calendar, Scale,
+  Settings, Shield, FileCheck, Calendar, Scale, ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
 export const MODULE_KEYS = {
   ACADEMICS: "academics",
+  ADMISSIONS: "admissions",
   USERS: "users",
   EXAMS: "exams",
   ATTENDANCE: "attendance",
@@ -22,6 +23,28 @@ export const MODULE_KEYS = {
   DOCUMENTS: "documents",
   EVENTS: "events",
   DISCIPLINE: "discipline",
+} as const;
+
+export const ADMISSIONS_RESOURCE_KEYS = {
+  STUDENT: "student",
+  PARENT: "parent",
+  STUDENT_PARENT: "student_parent",
+  ENROLLMENT: "enrollment",
+} as const;
+
+export const ACADEMICS_RESOURCE_KEYS = {
+  DEPARTMENT: "department",
+  GRADE_LEVEL: "grade_level",
+  SUBJECT_RECORD: "subject_record",
+  CLASS_RECORD: "class_record",
+  CLASS_SUBJECT: "class_subject",
+  CLASS_SUBJECT_TEACHER: "class_subject_teacher",
+} as const;
+
+export const SETTINGS_RESOURCE_KEYS = {
+  INSTITUTION_SETTINGS: "institution_settings",
+  ACADEMIC_YEAR: "academic_year",
+  ACADEMIC_TERM_RECORD: "academic_term_record",
 } as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[keyof typeof MODULE_KEYS];
@@ -69,7 +92,8 @@ export interface ModuleMeta {
 }
 
 export const MODULE_REGISTRY: ModuleMeta[] = [
-  { key: "academics", displayName: "Academics", icon: GraduationCap, description: "Classes, subjects, and curriculum", resourceCount: 10 },
+  { key: "academics", displayName: "Academics", icon: GraduationCap, description: "Classes, subjects, and curriculum", resourceCount: 16 },
+  { key: "admissions", displayName: "Admissions", icon: ClipboardList, description: "Student admissions, enrollment, and guardian management", resourceCount: 4 },
   { key: "users", displayName: "Users", icon: Users, description: "User and profile management", resourceCount: 8 },
   { key: "exams", displayName: "Examinations", icon: FileText, description: "Exams, results, and grading", resourceCount: 13 },
   { key: "attendance", displayName: "Attendance", icon: CalendarCheck, description: "Daily and period attendance", resourceCount: 7 },
@@ -80,7 +104,7 @@ export const MODULE_REGISTRY: ModuleMeta[] = [
   { key: "library", displayName: "Library", icon: BookOpen, description: "Books and catalog management", resourceCount: 11 },
   { key: "transport", displayName: "Transport", icon: Bus, description: "Routes and vehicle tracking", resourceCount: 8 },
   { key: "hostel", displayName: "Hostel", icon: Building, description: "Room and hostel management", resourceCount: 9 },
-  { key: "settings", displayName: "Settings", icon: Settings, description: "System configuration", resourceCount: 9 },
+  { key: "settings", displayName: "Settings", icon: Settings, description: "System configuration", resourceCount: 12 },
   { key: "permissions", displayName: "Permissions", icon: Shield, description: "Roles and access control", resourceCount: 8 },
   { key: "documents", displayName: "Documents", icon: FileCheck, description: "Certificates and documents", resourceCount: 7 },
   { key: "events", displayName: "Events", icon: Calendar, description: "Events and calendar", resourceCount: 6 },
@@ -88,7 +112,7 @@ export const MODULE_REGISTRY: ModuleMeta[] = [
 ];
 
 export const PRIMARY_MODULES: ModuleKey[] = [
-  "academics", "users", "exams", "attendance", "fees",
+  "academics", "admissions", "users", "exams", "attendance", "fees",
   "timetable", "reports", "communications", "settings",
 ];
 

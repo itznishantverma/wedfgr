@@ -83,7 +83,10 @@ export default function LoginPage() {
       await login(values.unique_id, values.password, institute || undefined);
       toast.success("Welcome back!");
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      const msg = err.message?.includes("format") || err.message?.includes("not found")
+        ? err.message
+        : "Login failed";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

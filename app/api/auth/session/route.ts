@@ -1,32 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyJwt } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
-    const { access_token } = await request.json();
+    const body = await request.json();
+    const { access_token } = body;
 
-    if (!access_token || typeof access_token !== "string") {
-      return NextResponse.json({ error: "Missing token" }, { status: 400 });
-    }
-
-    const parts = access_token.split(".");
-    if (parts.length !== 3) {
+    if (!access_token || typeof access_token !== "string" || access_token.length > 2048) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
 
-    let payload;
-    try {
-      payload = JSON.parse(
-        atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
-      );
-    } catch {
+    const payload = await verifyJwt(access_token);
+    if (!payload) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
-    }
-
-    if (!payload.exp || !payload.sub) {
-      return NextResponse.json(
-        { error: "Invalid token claims" },
-        { status: 400 }
-      );
     }
 
     const maxAge = Math.max(0, payload.exp - Math.floor(Date.now() / 1000));

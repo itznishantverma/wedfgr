@@ -2,12 +2,15 @@
 
 import { createContext, useContext, useMemo, ReactNode } from "react";
 import { UserPermission, FieldVisibility } from "@/lib/types/permission.types";
+import { evaluateConditions } from "./conditions-evaluator";
+
+type ConditionContext = Record<string, unknown>;
 
 interface PermissionContextValue {
   permissions: UserPermission[];
-  can: (resource: string, action: string) => boolean;
-  canAny: (resource: string, actions: string[]) => boolean;
-  canAll: (resource: string, actions: string[]) => boolean;
+  can: (resource: string, action: string, conditionCtx?: ConditionContext) => boolean;
+  canAny: (resource: string, actions: string[], conditionCtx?: ConditionContext) => boolean;
+  canAll: (resource: string, actions: string[], conditionCtx?: ConditionContext) => boolean;
   getScope: (resource: string, action: string) => string | null;
   getFieldRules: (resource: string, action: string) => Record<string, FieldVisibility> | null;
   canModule: (moduleKey: string) => boolean;
@@ -36,16 +39,21 @@ export function PermissionProvider({ permissions, children }: PermissionProvider
       }
     }
 
-    const can = (resource: string, action: string): boolean => {
-      return permMap.has(`${resource}:${action}`);
+    const can = (resource: string, action: string, conditionCtx?: ConditionContext): boolean => {
+      const perm = permMap.get(`${resource}:${action}`);
+      if (!perm) return false;
+      if (perm.conditions) {
+        return evaluateConditions(perm.conditions, conditionCtx ?? {});
+      }
+      return true;
     };
 
-    const canAny = (resource: string, actions: string[]): boolean => {
-      return actions.some((a) => can(resource, a));
+    const canAny = (resource: string, actions: string[], conditionCtx?: ConditionContext): boolean => {
+      return actions.some((a) => can(resource, a, conditionCtx));
     };
 
-    const canAll = (resource: string, actions: string[]): boolean => {
-      return actions.every((a) => can(resource, a));
+    const canAll = (resource: string, actions: string[], conditionCtx?: ConditionContext): boolean => {
+      return actions.every((a) => can(resource, a, conditionCtx));
     };
 
     const getScope = (resource: string, action: string): string | null => {
@@ -57,7 +65,9 @@ export function PermissionProvider({ permissions, children }: PermissionProvider
     };
 
     const canModule = (moduleKey: string): boolean => {
-      return moduleMap.has(moduleKey);
+      const modulePerms = moduleMap.get(moduleKey);
+      if (!modulePerms || modulePerms.length === 0) return false;
+      return modulePerms.some((p) => evaluateConditions(p.conditions, {}));
     };
 
     const getModulePermissions = (moduleKey: string): UserPermission[] => {
