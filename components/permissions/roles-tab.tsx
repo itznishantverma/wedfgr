@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTenantClient } from "@/hooks/use-tenant-client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ interface RolesTabProps {
 
 export function RolesTab({ onEditPolicies }: RolesTabProps) {
   const client = useTenantClient();
+  const { logout } = useAuth();
   const [roles, setRoles] = useState<RoleData[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -59,13 +61,14 @@ export function RolesTab({ onEditPolicies }: RolesTabProps) {
     setLoading(true);
     const { data, error } = await client.rpc("rpc_list_roles_with_policy_count");
     if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
       toast.error("Failed to load roles");
     } else {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setRoles(Array.isArray(parsed) ? parsed : []);
     }
     setLoading(false);
-  }, [client]);
+  }, [client, logout]);
 
   useEffect(() => {
     fetchRoles();
@@ -90,7 +93,8 @@ export function RolesTab({ onEditPolicies }: RolesTabProps) {
       p_color: formColor || null,
     });
     if (error) {
-      toast.error(error.message || "Failed to create role");
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+      toast.error("Failed to create role");
     } else {
       toast.success("Role created");
       resetForm();
@@ -107,7 +111,8 @@ export function RolesTab({ onEditPolicies }: RolesTabProps) {
       p_role_id: deleteTarget.id,
     });
     if (error) {
-      toast.error(error.message || "Failed to delete role");
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+      toast.error("Failed to delete role");
     } else {
       toast.success("Role deleted");
       setDeleteTarget(null);
@@ -129,7 +134,8 @@ export function RolesTab({ onEditPolicies }: RolesTabProps) {
     });
 
     if (createErr) {
-      toast.error(createErr.message || "Failed to create role");
+      if (createErr.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+      toast.error("Failed to create role");
       setSubmitting(false);
       return;
     }

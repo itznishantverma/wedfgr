@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTenantClient } from "@/hooks/use-tenant-client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,6 +67,7 @@ const SCOPE_OPTIONS = [
 
 export function PolicyTreeTab({ selectedRoleId, onSelectRole }: PolicyTreeTabProps) {
   const client = useTenantClient();
+  const { logout } = useAuth();
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [tree, setTree] = useState<ModuleNode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,12 +80,15 @@ export function PolicyTreeTab({ selectedRoleId, onSelectRole }: PolicyTreeTabPro
     if (!client) return;
     setRolesLoading(true);
     const { data, error } = await client.rpc("rpc_list_roles_with_policy_count");
-    if (!error && data) {
+    if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+      toast.error("Failed to load roles");
+    } else if (data) {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setRoles(Array.isArray(parsed) ? parsed : []);
     }
     setRolesLoading(false);
-  }, [client]);
+  }, [client, logout]);
 
   const fetchTree = useCallback(async () => {
     if (!client || !selectedRoleId) return;
@@ -92,13 +97,14 @@ export function PolicyTreeTab({ selectedRoleId, onSelectRole }: PolicyTreeTabPro
       p_role_id: selectedRoleId,
     });
     if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
       toast.error("Failed to load policy tree");
     } else {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setTree(Array.isArray(parsed) ? parsed : []);
     }
     setLoading(false);
-  }, [client, selectedRoleId]);
+  }, [client, selectedRoleId, logout]);
 
   useEffect(() => { fetchRoles(); }, [fetchRoles]);
   useEffect(() => { fetchTree(); }, [fetchTree]);
@@ -128,6 +134,7 @@ export function PolicyTreeTab({ selectedRoleId, onSelectRole }: PolicyTreeTabPro
         p_policy_id: action.policy_id,
       });
       if (error) {
+        if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
         toast.error("Failed to remove policy");
         return;
       }
@@ -137,6 +144,7 @@ export function PolicyTreeTab({ selectedRoleId, onSelectRole }: PolicyTreeTabPro
         p_policy_id: action.policy_id,
       });
       if (error) {
+        if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
         toast.error("Failed to assign policy");
         return;
       }

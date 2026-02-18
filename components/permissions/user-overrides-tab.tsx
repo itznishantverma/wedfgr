@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTenantClient } from "@/hooks/use-tenant-client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ interface UserOverride {
 
 export function UserOverridesTab() {
   const client = useTenantClient();
+  const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -83,6 +85,7 @@ export function UserOverridesTab() {
       p_query: searchQuery.trim(),
     });
     if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
       toast.error("Search failed");
     } else {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
@@ -101,12 +104,14 @@ export function UserOverridesTab() {
     const { data, error } = await client.rpc("rpc_list_user_overrides", {
       p_user_id: userId,
     });
-    if (!error && data) {
+    if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+    } else if (data) {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setUserOverrides(Array.isArray(parsed) ? parsed : []);
     }
     setOverridesLoading(false);
-  }, [client]);
+  }, [client, logout]);
 
   const handleSelectUser = (user: UserResult) => {
     setSelectedUser(user);
@@ -129,12 +134,14 @@ export function UserOverridesTab() {
     const { data, error } = await client.rpc("rpc_search_policies", {
       p_query: policySearchQuery.trim(),
     });
-    if (!error && data) {
+    if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
+    } else if (data) {
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setPolicyResults(Array.isArray(parsed) ? parsed : []);
     }
     setPolicySearching(false);
-  }, [client, policySearchQuery]);
+  }, [client, policySearchQuery, logout]);
 
   const handlePolicyKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handlePolicySearch();
@@ -160,6 +167,7 @@ export function UserOverridesTab() {
     });
 
     if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
       toast.error("Failed to create override");
     } else {
       toast.success("Override created");
@@ -175,6 +183,7 @@ export function UserOverridesTab() {
       p_override_id: overrideId,
     });
     if (error) {
+      if (error.message?.includes("UNAUTHENTICATED")) { logout(); return; }
       toast.error("Failed to deactivate override");
     } else {
       toast.success("Override deactivated");
